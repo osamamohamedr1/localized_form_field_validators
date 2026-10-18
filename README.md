@@ -1,8 +1,9 @@
 # localized_form_field_validators
 
 Ready-made validators for Flutter's `TextFormField`. They work out of the box
-with English messages and sensible rules, and you can override any message or
-rule for the whole app or for a single field.
+with English messages and sensible rules. Built-in Arabic, German, Spanish,
+French and Turkish translations are one language code away, and you can
+override any message or rule for the whole app or for a single field.
 
 ```dart
 TextFormField(validator: FormValidators.email());
@@ -14,6 +15,9 @@ TextFormField(validator: FormValidators.email());
   "email or phone", login and strong passwords, numbers, and matching fields,
   plus `compose` to combine them.
 - English default messages and rules, so no setup is needed.
+- Built-in translations selected by language code:
+  `FormValidators.configure(languageCode: 'ar')`. Supported: English
+  (default), Arabic, German, Spanish, French and Turkish.
 - Two levels of override: **global** (once at startup) and **per call** (on
   one field). A per-call argument beats the global configuration, which beats
   the built-in default.
@@ -28,7 +32,7 @@ From pub.dev:
 
 ```yaml
 dependencies:
-  localized_form_field_validators: ^0.1.0
+  localized_form_field_validators: ^0.2.0
 ```
 
 From git:
@@ -188,11 +192,89 @@ Notes:
 
 The four `passwordRequire*` flags are used only by `strongPassword`.
 
+## Built-in languages
+
+Messages are in English unless you choose another language. To use a built-in
+translation, pass its language code to `configure`:
+
+```dart
+void main() {
+  FormValidators.configure(languageCode: 'ar');
+  runApp(const MyApp());
+}
+```
+
+| Code | Language | Class |
+|---|---|---|
+| `en` | English (default) | `ValidationMessages` |
+| `ar` | Arabic | `ValidationMessagesAr` |
+| `de` | German | `ValidationMessagesDe` |
+| `es` | Spanish | `ValidationMessagesEs` |
+| `fr` | French | `ValidationMessagesFr` |
+| `tr` | Turkish | `ValidationMessagesTr` |
+
+- If you don't pass a language code, the messages are in English.
+- Codes are case-insensitive, and region suffixes are ignored, so `'ar'`,
+  `'AR'`, `'ar-EG'` and `'ar_SA'` all select Arabic.
+- An unsupported code falls back to English.
+  `ValidationMessages.supportedLanguageCodes` lists the supported codes, and
+  `ValidationMessages.forLanguage(code)` returns the messages for one.
+- Validators that already exist switch language the next time they run.
+- Arabic counts follow Arabic plural rules, for example "حرف واحد", "حرفين",
+  "3 أحرف" and "11 حرفًا".
+- Pass either `languageCode` or `messages` to `configure`, not both.
+
+### Following the app's locale
+
+Call `configure` from `MaterialApp.builder`. The builder runs again whenever
+the locale changes, so the validators follow it:
+
+```dart
+MaterialApp(
+  locale: currentLocale,
+  supportedLocales: const [Locale('en'), Locale('ar')],
+  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+  builder: (context, child) {
+    FormValidators.configure(
+      languageCode: Localizations.localeOf(context).languageCode,
+    );
+    return child!;
+  },
+  home: const HomePage(),
+);
+```
+
+`GlobalMaterialLocalizations` comes from `flutter_localizations`, which your
+app needs for right-to-left layout and translated Material labels. With
+easy_localization, pass `languageCode: context.locale.languageCode` instead.
+
+> An error that is already on screen keeps its old text until the field is
+> validated again, for example on the next `validate()` call or keystroke
+> with `AutovalidateMode.onUserInteraction`.
+
+### Changing one message in a built-in language
+
+Extend the language's class and override only what you need. Every other
+message stays in that language:
+
+```dart
+class AppArabicMessages extends ValidationMessagesAr {
+  const AppArabicMessages();
+
+  @override
+  String get invalidPhone => 'أدخل رقم جوال مصري أو سعودي صحيح.';
+}
+
+FormValidators.configure(messages: const AppArabicMessages());
+```
+
 ## Overriding messages globally
 
-Extend `ValidationMessages`, override only the messages you need, and pass an
-instance to `FormValidators.configure`. Every message you don't override keeps
-its English default.
+To use your own translations instead, for example for a language without
+built-in messages or one that your app already translates, extend
+`ValidationMessages`, override only the messages you need, and pass an
+instance to `FormValidators.configure`. Every message you don't override
+keeps its English default.
 
 Validators read messages **each time they run** and never cache them. A
 getter that looks up a translation therefore always returns the text for the
@@ -353,8 +435,11 @@ Precedence, from highest to lowest:
 
 1. **Per-call argument**, such as `message`, `requiredMessage`, `pattern`,
    `minLength` or `requireUppercase`.
-2. **Global configuration** set with `FormValidators.configure`.
-3. **Built-in default** from `ValidationMessages` and `ValidationRules`.
+2. **Global configuration** set with `FormValidators.configure`: a
+   built-in language, your own `ValidationMessages` subclass, or
+   `ValidationRules`.
+3. **Built-in default**: the English `ValidationMessages` and the default
+   `ValidationRules`.
 
 ## Composing validators
 

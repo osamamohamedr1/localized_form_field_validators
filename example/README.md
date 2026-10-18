@@ -6,6 +6,8 @@ A demo sign-up form for the `localized_form_field_validators` package. It shows:
 - **Global override:** `main()` calls `FormValidators.configure` with a
   `ValidationMessages` subclass and an Egyptian/Saudi phone pattern.
 - **Per-call override:** the confirm-password field passes its own messages.
+- **Built-in languages:** the translate icon in the app bar switches the
+  validators to Arabic, German, Spanish, French or Turkish.
 
 Run it with:
 

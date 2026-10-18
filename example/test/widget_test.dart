@@ -30,6 +30,40 @@ void main() {
     );
   });
 
+  testWidgets('switching language updates the errors on screen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const DemoApp());
+    await tester.tap(find.text('Create account'));
+    await tester.pump();
+    expect(find.text('This field is required.'), findsNWidgets(2));
+
+    await tester.tap(find.byTooltip('Language'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('العربية'));
+    await tester.pumpAndSettle();
+
+    // Built-in Arabic messages.
+    expect(find.text('This field is required.'), findsNothing);
+    expect(find.text('هذا الحقل مطلوب.'), findsNWidgets(2));
+    expect(find.text('البريد الإلكتروني مطلوب.'), findsOneWidget);
+    expect(find.text('كلمة المرور مطلوبة.'), findsOneWidget);
+    // Per-call messages are not translated.
+    expect(find.text('Please confirm your password.'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Language'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+
+    // Back to English, including the DemoMessages override.
+    expect(find.text('This field is required.'), findsNWidgets(2));
+    expect(
+      find.text('We need your email to create the account.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('accepts a valid form', (tester) async {
     await tester.pumpWidget(const DemoApp());
 

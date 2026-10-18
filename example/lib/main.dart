@@ -3,7 +3,8 @@ import 'package:localized_form_field_validators/localized_form_field_validators.
 
 void main() {
   // Global override: applies to every validator in the app, including
-  // validators that were built before this call.
+  // validators that were built before this call. Without a languageCode or
+  // messages, the validators use the built-in English messages.
   FormValidators.configure(
     messages: const DemoMessages(),
     rules: const ValidationRules().copyWith(
@@ -14,8 +15,8 @@ void main() {
   runApp(const DemoApp());
 }
 
-/// App-wide messages. Only these two change; every other message keeps its
-/// English default.
+/// App-wide English messages. Only these two change; every other message
+/// keeps its English default. Other languages use the built-in translations.
 class DemoMessages extends ValidationMessages {
   /// Creates the demo messages.
   const DemoMessages();
@@ -26,6 +27,16 @@ class DemoMessages extends ValidationMessages {
   @override
   String get invalidPhone => 'Enter an Egyptian or Saudi mobile number.';
 }
+
+/// Display names for the built-in languages in the language menu.
+const _languageNames = {
+  'en': 'English',
+  'ar': 'العربية',
+  'de': 'Deutsch',
+  'es': 'Español',
+  'fr': 'Français',
+  'tr': 'Türkçe',
+};
 
 /// The demo application.
 class DemoApp extends StatelessWidget {
@@ -54,6 +65,8 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
+  String _languageCode = 'en';
+  bool _submitted = false;
 
   @override
   void dispose() {
@@ -61,7 +74,21 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
+  void _setLanguage(String code) {
+    if (code == 'en') {
+      FormValidators.configure(messages: const DemoMessages());
+    } else {
+      // Built-in translation, selected by language code.
+      FormValidators.configure(languageCode: code);
+    }
+    setState(() => _languageCode = code);
+    // Validators read the new messages the next time they run, so re-run
+    // them to update errors that are already on screen.
+    if (_submitted) _formKey.currentState!.validate();
+  }
+
   void _submit() {
+    _submitted = true;
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(
         context,
@@ -72,76 +99,98 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign up')),
-      body: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Defaults: built-in messages and rules.
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: FormValidators.compose([
-                FormValidators.required(),
-                FormValidators.lengthBetween(2, 50),
-              ]),
-            ),
-            // Global override: emailRequired comes from DemoMessages.
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-              validator: FormValidators.email(),
-            ),
-            // Global override: phonePattern and invalidPhone come from
-            // main().
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Mobile (optional)',
-                hintText: '01012345678 or 512345678',
+      appBar: AppBar(
+        title: const Text('Sign up'),
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Language',
+            icon: const Icon(Icons.translate),
+            initialValue: _languageCode,
+            onSelected: _setLanguage,
+            itemBuilder: (context) => [
+              for (final code in ValidationMessages.supportedLanguageCodes)
+                PopupMenuItem(value: code, child: Text(_languageNames[code]!)),
+            ],
+          ),
+        ],
+      ),
+      body: Directionality(
+        textDirection: _languageCode == 'ar'
+            ? TextDirection.rtl
+            : TextDirection.ltr,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Defaults: built-in messages and rules.
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Name'),
+                validator: FormValidators.compose([
+                  FormValidators.required(),
+                  FormValidators.lengthBetween(2, 50),
+                ]),
               ),
-              keyboardType: TextInputType.phone,
-              validator: FormValidators.phone(isRequired: false),
-            ),
-            // Defaults, with a range and whole numbers only.
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Age'),
-              keyboardType: TextInputType.number,
-              validator: FormValidators.number(
-                min: 18,
-                max: 120,
-                allowDecimal: false,
+              // Global override: in English, emailRequired comes from
+              // DemoMessages.
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
+                validator: FormValidators.email(),
               ),
-            ),
-            // Defaults: length, lowercase, uppercase, number and special
-            // character, checked in that order.
-            TextFormField(
-              controller: _password,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-              validator: FormValidators.strongPassword(),
-            ),
-            // Per-call override: these messages beat the global and default
-            // ones.
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Confirm password'),
-              obscureText: true,
-              validator: FormValidators.compose([
-                FormValidators.required(
-                  message: 'Please confirm your password.',
+              // Global override: phonePattern and invalidPhone come from
+              // main().
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Mobile (optional)',
+                  hintText: '01012345678 or 512345678',
                 ),
-                FormValidators.match(
-                  () => _password.text,
-                  message: 'Passwords must match.',
+                keyboardType: TextInputType.phone,
+                validator: FormValidators.phone(isRequired: false),
+              ),
+              // Defaults, with a range and whole numbers only.
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Age'),
+                keyboardType: TextInputType.number,
+                validator: FormValidators.number(
+                  min: 18,
+                  max: 120,
+                  allowDecimal: false,
                 ),
-              ]),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _submit,
-              child: const Text('Create account'),
-            ),
-          ],
+              ),
+              // Defaults: length, lowercase, uppercase, number and special
+              // character, checked in that order.
+              TextFormField(
+                controller: _password,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: FormValidators.strongPassword(),
+              ),
+              // Per-call override: these messages beat the global and default
+              // ones, so they stay in English whatever the language.
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Confirm password',
+                ),
+                obscureText: true,
+                validator: FormValidators.compose([
+                  FormValidators.required(
+                    message: 'Please confirm your password.',
+                  ),
+                  FormValidators.match(
+                    () => _password.text,
+                    message: 'Passwords must match.',
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _submit,
+                child: const Text('Create account'),
+              ),
+            ],
+          ),
         ),
       ),
     );

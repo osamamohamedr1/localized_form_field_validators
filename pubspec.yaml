@@ -1,6 +1,6 @@
 name: localized_form_field_validators
-description: "TextFormField validators with English defaults and per-call or global overrides for messages and rules. Localization-friendly, no extra dependencies."
-version: 0.1.0
+description: "TextFormField validators with built-in English, Arabic, German, Spanish, French and Turkish messages selected by language code, plus global and per-call overrides."
+version: 0.2.0
 repository: https://github.com/osamamohamedr1/localized_form_field_validators
 
 environment:

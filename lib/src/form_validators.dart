@@ -45,7 +45,7 @@ abstract final class FormValidators {
   static final RegExp _uppercase = RegExp('[A-Z]');
   static final RegExp _digit = RegExp('[0-9]');
 
-  /// The messages validators currently use. Defaults to
+  /// The messages validators currently use. Defaults to the English
   /// `const ValidationMessages()`.
   static ValidationMessages get messages => _messages;
 
@@ -53,26 +53,47 @@ abstract final class FormValidators {
   /// `const ValidationRules()`.
   static ValidationRules get rules => _rules;
 
-  /// Sets the app-wide [messages] and/or [rules].
+  /// Sets the app-wide messages and/or [rules].
   ///
-  /// Only the arguments you pass are replaced. Call it once at startup, or
-  /// again whenever the configuration changes, such as after a locale change.
+  /// Set the messages in one of two ways:
+  ///
+  /// - [languageCode] selects built-in messages, as returned by
+  ///   [ValidationMessages.forLanguage]. It is case-insensitive and ignores a
+  ///   region suffix such as `-EG`, and a code without built-in messages
+  ///   falls back to English.
+  /// - [messages] sets your own messages, such as a subclass of
+  ///   [ValidationMessages].
+  ///
+  /// Pass at most one of the two. Only the arguments you pass are replaced,
+  /// so until you pass one, validators use the English defaults. Call this
+  /// once at startup, or again whenever the configuration changes, such as
+  /// after a locale change.
   ///
   /// ```dart
+  /// FormValidators.configure(languageCode: 'ar');
+  ///
   /// FormValidators.configure(
   ///   messages: const AppValidationMessages(),
   ///   rules: FormValidators.rules.copyWith(passwordMinLength: 10),
   /// );
   /// ```
   static void configure({
+    String? languageCode,
     ValidationMessages? messages,
     ValidationRules? rules,
   }) {
+    assert(
+      languageCode == null || messages == null,
+      'Pass either languageCode or messages, not both.',
+    );
+    if (languageCode != null) {
+      _messages = ValidationMessages.forLanguage(languageCode);
+    }
     if (messages != null) _messages = messages;
     if (rules != null) _rules = rules;
   }
 
-  /// Restores the built-in default [messages] and [rules].
+  /// Restores the built-in default [messages] (English) and [rules].
   ///
   /// Call it in `tearDown` so tests don't leak configuration into each other.
   static void reset() {

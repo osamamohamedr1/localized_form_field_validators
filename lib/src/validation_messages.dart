@@ -1,8 +1,23 @@
+import 'l10n/validation_messages_ar.dart';
+import 'l10n/validation_messages_de.dart';
+import 'l10n/validation_messages_es.dart';
+import 'l10n/validation_messages_fr.dart';
+import 'l10n/validation_messages_tr.dart';
+
 /// The error messages returned by the validators in `FormValidators`.
 ///
-/// Every message has an English default. To change messages, for example to
-/// plug in localization, extend this class, override only the members you
-/// need, and register the subclass once with `FormValidators.configure`:
+/// Every message has an English default, and English is used until another
+/// language is configured. Built-in translations for the
+/// [supportedLanguageCodes] are available by language code:
+///
+/// ```dart
+/// FormValidators.configure(languageCode: 'ar');
+/// ```
+///
+/// To change messages, for example to plug in your own localization, extend
+/// this class (or a built-in translation such as [ValidationMessagesAr]),
+/// override only the members you need, and register the subclass once with
+/// `FormValidators.configure`:
 ///
 /// ```dart
 /// class AppValidationMessages extends ValidationMessages {
@@ -30,6 +45,40 @@ class ValidationMessages {
   ///
   /// Subclasses can call this from their own `const` constructor.
   const ValidationMessages();
+
+  /// Returns the built-in messages for [languageCode].
+  ///
+  /// [languageCode] is case-insensitive, and a region or script suffix is
+  /// ignored, so `'ar'`, `'AR'`, `'ar-EG'` and `'ar_SA'` all return
+  /// [ValidationMessagesAr]. A code that is not in [supportedLanguageCodes]
+  /// returns the English defaults.
+  ///
+  /// ```dart
+  /// final messages = ValidationMessages.forLanguage(
+  ///   Localizations.localeOf(context).languageCode,
+  /// );
+  /// ```
+  factory ValidationMessages.forLanguage(String languageCode) {
+    return switch (_baseLanguage(languageCode)) {
+      'ar' => const ValidationMessagesAr(),
+      'de' => const ValidationMessagesDe(),
+      'es' => const ValidationMessagesEs(),
+      'fr' => const ValidationMessagesFr(),
+      'tr' => const ValidationMessagesTr(),
+      _ => const ValidationMessages(),
+    };
+  }
+
+  /// The language codes that have built-in messages: English (`en`), Arabic
+  /// (`ar`), German (`de`), Spanish (`es`), French (`fr`) and Turkish (`tr`).
+  static const List<String> supportedLanguageCodes = [
+    'en',
+    'ar',
+    'de',
+    'es',
+    'fr',
+    'tr',
+  ];
 
   // General -------------------------------------------------------------------
 
@@ -162,3 +211,8 @@ class ValidationMessages {
 }
 
 String _characters(int count) => count == 1 ? 'character' : 'characters';
+
+/// Lowercases [code] and strips any region or script suffix, so `'ar-EG'`
+/// becomes `'ar'`.
+String _baseLanguage(String code) =>
+    code.trim().toLowerCase().split(RegExp('[-_]')).first;
