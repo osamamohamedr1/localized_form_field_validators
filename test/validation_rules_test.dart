@@ -1,5 +1,5 @@
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:form_validators/form_validators.dart';
 
 void main() {
   const defaults = ValidationRules();

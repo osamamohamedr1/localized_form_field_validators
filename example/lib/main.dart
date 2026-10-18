@@ -1,5 +1,5 @@
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter/material.dart';
-import 'package:form_validators/form_validators.dart';
 
 void main() {
   // Global override: applies to every validator in the app, including
@@ -35,7 +35,7 @@ class DemoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'form_validators demo',
+      title: 'easy_form_validators demo',
       theme: ThemeData(colorSchemeSeed: Colors.indigo),
       home: const SignUpPage(),
     );

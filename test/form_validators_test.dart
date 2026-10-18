@@ -1,5 +1,5 @@
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:form_validators/form_validators.dart';
 
 const _egyptOrSaudiPhone = r'^(010|011|012|015)\d{8}$|^5\d{8}$';
 

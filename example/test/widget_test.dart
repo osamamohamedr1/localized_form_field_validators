@@ -1,7 +1,7 @@
+import 'package:easy_form_validators/easy_form_validators.dart';
+import 'package:easy_form_validators_example/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:form_validators/form_validators.dart';
-import 'package:form_validators_example/main.dart';
 
 void main() {
   setUp(() => FormValidators.configure(messages: const DemoMessages()));

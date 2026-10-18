@@ -1,4 +1,4 @@
-# form_validators
+# easy_form_validators
 
 Ready-made validators for Flutter's `TextFormField`. They work out of the box
 with English messages and sensible rules, and you can override any message or
@@ -28,16 +28,16 @@ From pub.dev:
 
 ```yaml
 dependencies:
-  form_validators: ^0.1.0
+  easy_form_validators: ^0.1.0
 ```
 
 From git:
 
 ```yaml
 dependencies:
-  form_validators:
+  easy_form_validators:
     git:
-      url: https://github.com/osamamohamedr1/form_validators.git
+      url: https://github.com/osamamohamedr1/easy_form_validators.git
       ref: main
 ```
 
@@ -45,14 +45,14 @@ From a local path:
 
 ```yaml
 dependencies:
-  form_validators:
-    path: ../form_validators
+  easy_form_validators:
+    path: ../easy_form_validators
 ```
 
 Then import it:
 
 ```dart
-import 'package:form_validators/form_validators.dart';
+import 'package:easy_form_validators/easy_form_validators.dart';
 ```
 
 ## Quick start
@@ -201,8 +201,8 @@ current locale.
 ### With easy_localization
 
 ```dart
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:form_validators/form_validators.dart';
 
 import 'generated/locale_keys.g.dart';
 
@@ -258,7 +258,7 @@ wrapper is replaced with the new locale's instance.
 //   }
 // }
 
-import 'package:form_validators/form_validators.dart';
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:my_app/l10n/app_localizations.dart';
 
 class L10nValidationMessages extends ValidationMessages {
@@ -400,8 +400,8 @@ FormValidators.compose([FormValidators.required(), noWhitespace()]);
 The configuration is global, so restore it after each test:
 
 ```dart
+import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:form_validators/form_validators.dart';
 
 void main() {
   tearDown(FormValidators.reset);

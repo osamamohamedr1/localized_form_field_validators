@@ -8,7 +8,7 @@
 /// - [ValidationRules] holds the patterns and the password policy.
 ///
 /// ```dart
-/// import 'package:form_validators/form_validators.dart';
+/// import 'package:easy_form_validators/easy_form_validators.dart';
 ///
 /// TextFormField(
 ///   decoration: const InputDecoration(labelText: 'Email'),
