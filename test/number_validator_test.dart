@@ -90,4 +90,52 @@ void main() {
       expect(FormValidators.number(min: 5, max: 5)('5'), isNull);
     });
   });
+
+  group('exclusive bounds', () {
+    test('greaterThan rejects the bound itself', () {
+      final amount = FormValidators.number(greaterThan: 0);
+      expect(amount('0.01'), isNull);
+      expect(amount('100'), isNull);
+      expect(amount('0'), defaults.numberGreaterThan(0));
+      expect(amount('-5'), defaults.numberGreaterThan(0));
+    });
+
+    test('lessThan rejects the bound itself', () {
+      final percent = FormValidators.number(lessThan: 100);
+      expect(percent('99.9'), isNull);
+      expect(percent('100'), defaults.numberLessThan(100));
+    });
+
+    test('combines with the inclusive bound on the other side', () {
+      final validator = FormValidators.number(greaterThan: 0, max: 1000);
+      expect(validator('1000'), isNull);
+      expect(validator('1000.01'), defaults.numberMax(1000));
+      expect(validator('0'), defaults.numberGreaterThan(0));
+    });
+
+    test('message replaces the new errors too', () {
+      final validator = FormValidators.number(
+        greaterThan: 0,
+        lessThan: 10,
+        message: 'Out of range',
+      );
+      expect(validator('0'), 'Out of range');
+      expect(validator('10'), 'Out of range');
+    });
+
+    test('asserts consistent bounds', () {
+      expect(
+        () => FormValidators.number(min: 0, greaterThan: 0),
+        throwsAssertionError,
+      );
+      expect(
+        () => FormValidators.number(max: 10, lessThan: 10),
+        throwsAssertionError,
+      );
+      expect(
+        () => FormValidators.number(greaterThan: 10, lessThan: 5),
+        throwsAssertionError,
+      );
+    });
+  });
 }

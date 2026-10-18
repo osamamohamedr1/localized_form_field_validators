@@ -6,6 +6,7 @@ void main() {
 
   test('general defaults', () {
     expect(messages.required, 'This field is required.');
+    expect(messages.requiredField('Name'), 'Name is required.');
     expect(messages.minLength(3), 'Must be at least 3 characters.');
     expect(messages.minLength(1), 'Must be at least 1 character.');
     expect(messages.maxLength(10), 'Must be at most 10 characters.');
@@ -25,6 +26,24 @@ void main() {
       messages.invalidEmailOrPhone,
       'Enter a valid email address or phone number.',
     );
+  });
+
+  test('national ID defaults', () {
+    expect(messages.nationalIdRequired, 'National ID number is required.');
+    expect(messages.invalidNationalId, 'Enter a valid national ID number.');
+  });
+
+  test('date, passport and IBAN defaults', () {
+    expect(messages.dateRequired, 'Select a date.');
+    expect(messages.dateMustBeFuture, 'Date must be in the future.');
+    expect(messages.dateMustBePast, 'Date must be in the past.');
+    expect(messages.ageMin(18), 'Age must be at least 18 years.');
+    expect(messages.ageMin(1), 'Age must be at least 1 year.');
+    expect(messages.ageMax(120), 'Age must be at most 120 years.');
+    expect(messages.passportRequired, 'Passport number is required.');
+    expect(messages.invalidPassport, 'Enter a valid passport number.');
+    expect(messages.ibanRequired, 'IBAN is required.');
+    expect(messages.invalidIban, 'Enter a valid IBAN.');
   });
 
   test('password defaults', () {
@@ -60,6 +79,8 @@ void main() {
     expect(messages.numberMin(18), 'Must be at least 18.');
     expect(messages.numberMin(0.5), 'Must be at least 0.5.');
     expect(messages.numberMax(120), 'Must be at most 120.');
+    expect(messages.numberGreaterThan(0), 'Must be greater than 0.');
+    expect(messages.numberLessThan(100), 'Must be less than 100.');
   });
 
   test('a subclass overrides only what it changes', () {

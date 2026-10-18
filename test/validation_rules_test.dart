@@ -16,6 +16,13 @@ void main() {
     expect(defaults.passwordRequireNumber, isTrue);
     expect(defaults.passwordRequireSpecialCharacter, isTrue);
     expect(defaults.specialCharacterPattern, r'[^A-Za-z0-9\s]');
+    expect(defaults.passwordLowercasePattern, '[a-z]');
+    expect(defaults.passwordUppercasePattern, '[A-Z]');
+    expect(defaults.passwordNumberPattern, '[0-9]');
+    expect(defaults.passwordCheckOrder, PasswordCheck.values);
+    expect(defaults.passportPattern, r'^[A-Za-z0-9]{6,9}$');
+    expect(defaults.nationalIdRules, isEmpty);
+    expect(defaults.normalizeDigits, isTrue);
   });
 
   test('copyWith with no arguments returns an equal copy', () {
@@ -78,5 +85,44 @@ void main() {
       () => defaults.copyWith(passwordMinLength: -1),
       throwsAssertionError,
     );
+  });
+
+  test('copyWith and equality cover the new fields', () {
+    bool rule(String id) => true;
+    final rules = defaults.copyWith(
+      passwordLowercasePattern: 'l',
+      passwordUppercasePattern: 'u',
+      passwordNumberPattern: 'n',
+      passwordCheckOrder: PasswordCheck.values.reversed.toList(),
+      passportPattern: 'p',
+      nationalIdRules: {ArabCountry.oman: rule},
+      normalizeDigits: false,
+    );
+    expect(rules.passwordLowercasePattern, 'l');
+    expect(rules.passwordUppercasePattern, 'u');
+    expect(rules.passwordNumberPattern, 'n');
+    expect(rules.passwordCheckOrder.first, PasswordCheck.specialCharacter);
+    expect(rules.passportPattern, 'p');
+    expect(rules.nationalIdRules[ArabCountry.oman], same(rule));
+    expect(rules.normalizeDigits, isFalse);
+    expect(rules.emailPattern, defaults.emailPattern);
+
+    final same_ = defaults.copyWith(
+      passwordLowercasePattern: 'l',
+      passwordUppercasePattern: 'u',
+      passwordNumberPattern: 'n',
+      passwordCheckOrder: PasswordCheck.values.reversed.toList(),
+      passportPattern: 'p',
+      nationalIdRules: {ArabCountry.oman: rule},
+      normalizeDigits: false,
+    );
+    expect(rules, same_);
+    expect(rules.hashCode, same_.hashCode);
+    expect(
+      rules,
+      isNot(same_.copyWith(passwordCheckOrder: PasswordCheck.values)),
+    );
+    expect(rules, isNot(same_.copyWith(nationalIdRules: const {})));
+    expect(defaults, isNot(defaults.copyWith(normalizeDigits: false)));
   });
 }

@@ -1,7 +1,18 @@
 name: localized_form_field_validators
-description: "TextFormField validators with built-in English, Arabic, German, Spanish, French and Turkish messages selected by language code, plus global and per-call overrides."
-version: 0.2.0
+description: "TextFormField validators with English and Arabic messages, mobile phone and national ID checks for Arab countries, and global or per-call overrides."
+version: 0.3.0
 repository: https://github.com/osamamohamedr1/localized_form_field_validators
+topics:
+  - validation
+  - form
+  - localization
+  - arabic
+  - validator
+screenshots:
+  - description: Sign-up form showing English validation errors.
+    path: doc/screenshots/english.png
+  - description: The same form with the built-in Arabic messages, laid out right to left.
+    path: doc/screenshots/arabic.png
 
 environment:
   sdk: ^3.10.3

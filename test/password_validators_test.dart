@@ -175,4 +175,93 @@ void main() {
       );
     });
   });
+
+  group('strongPassword order and patterns', () {
+    const lengthLast = [
+      PasswordCheck.lowercase,
+      PasswordCheck.uppercase,
+      PasswordCheck.number,
+      PasswordCheck.specialCharacter,
+      PasswordCheck.minLength,
+    ];
+
+    test('checkOrder changes which failure comes first', () {
+      final defaultOrder = FormValidators.strongPassword();
+      final custom = FormValidators.strongPassword(checkOrder: lengthLast);
+      expect(defaultOrder('abc'), defaults.passwordMinLength(8));
+      expect(custom('abc'), defaults.passwordUppercase);
+      expect(custom('Ab1!'), defaults.passwordMinLength(8));
+      expect(custom('Abcdef1!'), isNull);
+    });
+
+    test('passwordCheckOrder sets the order for the whole app', () {
+      FormValidators.configure(
+        rules: const ValidationRules(passwordCheckOrder: lengthLast),
+      );
+      expect(
+        FormValidators.strongPassword()('abc'),
+        defaults.passwordUppercase,
+      );
+    });
+
+    test('checkOrder must list every check exactly once', () {
+      expect(
+        () => FormValidators.strongPassword(
+          checkOrder: const [PasswordCheck.minLength],
+        ),
+        throwsAssertionError,
+      );
+      expect(
+        () => FormValidators.strongPassword(
+          checkOrder: const [
+            PasswordCheck.minLength,
+            PasswordCheck.minLength,
+            PasswordCheck.lowercase,
+            PasswordCheck.uppercase,
+            PasswordCheck.number,
+          ],
+        ),
+        throwsAssertionError,
+      );
+      FormValidators.configure(
+        rules: const ValidationRules(
+          passwordCheckOrder: [PasswordCheck.number],
+        ),
+      );
+      expect(
+        () => FormValidators.strongPassword()('Abcdef1!'),
+        throwsAssertionError,
+      );
+    });
+
+    test('per-call character patterns', () {
+      final validator = FormValidators.strongPassword(
+        specialCharacterPattern: r'[@$!%*?&^#_+=-]',
+        numberPattern: r'\d.*\d',
+      );
+      expect(validator('Abcdefg1!'), defaults.passwordNumber);
+      expect(validator('Abcdef12~'), defaults.passwordSpecialCharacter);
+      expect(validator('Abcdef12!'), isNull);
+    });
+
+    test('global character patterns', () {
+      FormValidators.configure(
+        rules: const ValidationRules(passwordLowercasePattern: '[a-zé]'),
+      );
+      expect(FormValidators.strongPassword()('ÉéÉÉÉÉA1!'), isNull);
+      expect(
+        FormValidators.strongPassword()('ÉÉÉÉÉÉA1!'),
+        defaults.passwordLowercase,
+      );
+    });
+
+    test('message replaces every failure in any order', () {
+      final validator = FormValidators.strongPassword(
+        checkOrder: lengthLast,
+        message: 'Weak',
+      );
+      expect(validator('abc'), 'Weak');
+      expect(validator('Ab1!'), 'Weak');
+    });
+  });
 }

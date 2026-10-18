@@ -5,6 +5,7 @@ import 'package:localized_form_field_validators/localized_form_field_validators.
 /// compared.
 Map<String, String> _allMessages(ValidationMessages m) => {
   'required': m.required,
+  'requiredField': m.requiredField('X'),
   'minLength': m.minLength(7),
   'maxLength': m.maxLength(7),
   'lengthBetween': m.lengthBetween(3, 7),
@@ -16,6 +17,8 @@ Map<String, String> _allMessages(ValidationMessages m) => {
   'invalidPhone': m.invalidPhone,
   'emailOrPhoneRequired': m.emailOrPhoneRequired,
   'invalidEmailOrPhone': m.invalidEmailOrPhone,
+  'nationalIdRequired': m.nationalIdRequired,
+  'invalidNationalId': m.invalidNationalId,
   'passwordRequired': m.passwordRequired,
   'passwordMinLength': m.passwordMinLength(7),
   'passwordLowercase': m.passwordLowercase,
@@ -25,6 +28,17 @@ Map<String, String> _allMessages(ValidationMessages m) => {
   'invalidNumber': m.invalidNumber,
   'numberMin': m.numberMin(18),
   'numberMax': m.numberMax(120),
+  'numberGreaterThan': m.numberGreaterThan(0),
+  'numberLessThan': m.numberLessThan(100),
+  'dateRequired': m.dateRequired,
+  'dateMustBeFuture': m.dateMustBeFuture,
+  'dateMustBePast': m.dateMustBePast,
+  'ageMin': m.ageMin(18),
+  'ageMax': m.ageMax(120),
+  'passportRequired': m.passportRequired,
+  'invalidPassport': m.invalidPassport,
+  'ibanRequired': m.ibanRequired,
+  'invalidIban': m.invalidIban,
 };
 
 void main() {
@@ -33,23 +47,9 @@ void main() {
   tearDown(FormValidators.reset);
 
   group('ValidationMessages.forLanguage', () {
-    test('lists the supported language codes', () {
-      expect(ValidationMessages.supportedLanguageCodes, [
-        'en',
-        'ar',
-        'de',
-        'es',
-        'fr',
-        'tr',
-      ]);
-    });
-
-    test('returns the built-in translation for each code', () {
+    test('supports English and Arabic', () {
+      expect(ValidationMessages.supportedLanguageCodes, ['en', 'ar']);
       expect(ValidationMessages.forLanguage('ar'), isA<ValidationMessagesAr>());
-      expect(ValidationMessages.forLanguage('de'), isA<ValidationMessagesDe>());
-      expect(ValidationMessages.forLanguage('es'), isA<ValidationMessagesEs>());
-      expect(ValidationMessages.forLanguage('fr'), isA<ValidationMessagesFr>());
-      expect(ValidationMessages.forLanguage('tr'), isA<ValidationMessagesTr>());
       expect(
         ValidationMessages.forLanguage('en').runtimeType,
         ValidationMessages,
@@ -65,21 +65,13 @@ void main() {
         );
       }
       expect(
-        ValidationMessages.forLanguage('fr-CA'),
-        isA<ValidationMessagesFr>(),
-      );
-      expect(
-        ValidationMessages.forLanguage('es_MX'),
-        isA<ValidationMessagesEs>(),
-      );
-      expect(
         ValidationMessages.forLanguage('en-US').runtimeType,
         ValidationMessages,
       );
     });
 
-    test('falls back to English for unsupported or empty codes', () {
-      for (final code in ['xx', 'ja', '', '  ', 'arabic']) {
+    test('falls back to English for other or empty codes', () {
+      for (final code in ['fr', 'de', 'es', 'tr', 'xx', '', '  ', 'arabic']) {
         expect(
           ValidationMessages.forLanguage(code).runtimeType,
           ValidationMessages,
@@ -89,43 +81,52 @@ void main() {
     });
   });
 
-  group('built-in translations', () {
-    final englishMessages = _allMessages(english);
+  group('Arabic messages', () {
+    const ar = ValidationMessagesAr();
 
-    for (final code in ValidationMessages.supportedLanguageCodes.skip(1)) {
-      test('$code translates every message', () {
-        final translated = _allMessages(ValidationMessages.forLanguage(code));
-        for (final entry in translated.entries) {
-          expect(entry.value, isNotEmpty, reason: '$code ${entry.key}');
-          expect(
-            entry.value,
-            isNot(englishMessages[entry.key]),
-            reason: '$code ${entry.key} is not translated',
-          );
-        }
-      });
+    test('translate every message', () {
+      final englishMessages = _allMessages(english);
+      for (final entry in _allMessages(ar).entries) {
+        expect(entry.value, isNotEmpty, reason: entry.key);
+        expect(
+          entry.value,
+          isNot(englishMessages[entry.key]),
+          reason: '${entry.key} is not translated',
+        );
+      }
+    });
 
-      test('$code includes the arguments', () {
-        final m = ValidationMessages.forLanguage(code);
-        expect(m.minLength(7), contains('7'));
-        expect(m.maxLength(7), contains('7'));
-        expect(m.lengthBetween(3, 7), allOf(contains('3'), contains('7')));
-        expect(m.passwordMinLength(7), contains('7'));
-        expect(m.numberMin(18), contains('18'));
-        expect(m.numberMax(2.5), contains('2.5'));
-      });
-    }
+    test('include the arguments', () {
+      expect(ar.minLength(7), contains('7'));
+      expect(ar.lengthBetween(3, 7), allOf(contains('3'), contains('7')));
+      expect(ar.passwordMinLength(7), contains('7'));
+      expect(ar.numberMin(18), contains('18'));
+      expect(ar.numberMax(2.5), contains('2.5'));
+      expect(ar.requiredField('الاسم'), contains('الاسم'));
+    });
 
-    test('Arabic messages', () {
-      const ar = ValidationMessagesAr();
+    test('have the expected text', () {
       expect(ar.required, 'هذا الحقل مطلوب.');
+      expect(ar.requiredField('الاسم'), 'حقل الاسم مطلوب.');
+      expect(ar.requiredField('كلمة المرور'), 'حقل كلمة المرور مطلوب.');
       expect(ar.invalidEmail, 'أدخل بريدًا إلكترونيًا صالحًا.');
+      expect(ar.nationalIdRequired, 'رقم الهوية مطلوب.');
+      expect(ar.invalidNationalId, 'أدخل رقم هوية صالحًا.');
       expect(ar.passwordRequired, 'كلمة المرور مطلوبة.');
       expect(ar.numberMin(18), 'يجب ألا تقل القيمة عن 18.');
     });
 
-    test('Arabic counts follow Arabic plural rules', () {
-      const ar = ValidationMessagesAr();
+    test('years follow Arabic plural rules', () {
+      expect(ar.ageMin(1), 'يجب ألا يقل العمر عن سنة واحدة.');
+      expect(ar.ageMin(2), 'يجب ألا يقل العمر عن سنتين.');
+      expect(ar.ageMin(3), 'يجب ألا يقل العمر عن 3 سنوات.');
+      expect(ar.ageMin(10), 'يجب ألا يقل العمر عن 10 سنوات.');
+      expect(ar.ageMin(18), 'يجب ألا يقل العمر عن 18 سنة.');
+      expect(ar.ageMax(100), 'يجب ألا يزيد العمر عن 100 سنة.');
+      expect(ar.ageMax(103), 'يجب ألا يزيد العمر عن 103 سنوات.');
+    });
+
+    test('counts follow Arabic plural rules', () {
       String count(int n) => ar.maxLength(n);
 
       expect(count(0), 'يجب ألا يزيد عن 0 حرف.');
@@ -146,28 +147,6 @@ void main() {
         'يجب أن تتكون كلمة المرور من 12 حرفًا على الأقل.',
       );
     });
-
-    test('French and Spanish use the singular for one character', () {
-      const fr = ValidationMessagesFr();
-      expect(fr.minLength(1), 'Doit contenir au moins 1 caractère.');
-      expect(fr.minLength(0), 'Doit contenir au moins 0 caractère.');
-      expect(fr.minLength(2), 'Doit contenir au moins 2 caractères.');
-
-      const es = ValidationMessagesEs();
-      expect(es.minLength(1), 'Debe tener al menos 1 carácter.');
-      expect(es.minLength(2), 'Debe tener al menos 2 caracteres.');
-    });
-
-    test('German and Turkish messages', () {
-      expect(
-        const ValidationMessagesDe().passwordUppercase,
-        'Das Passwort muss mindestens einen Großbuchstaben enthalten.',
-      );
-      expect(
-        const ValidationMessagesTr().minLength(8),
-        'En az 8 karakter olmalıdır.',
-      );
-    });
   });
 
   group('configure(languageCode:)', () {
@@ -180,20 +159,28 @@ void main() {
       expect(FormValidators.email()(''), 'Email is required.');
     });
 
-    test('switches every validator to the built-in language', () {
+    test('switches every validator to Arabic', () {
       FormValidators.configure(languageCode: 'ar');
       expect(FormValidators.messages, isA<ValidationMessagesAr>());
       expect(FormValidators.required()(''), 'هذا الحقل مطلوب.');
+      expect(
+        FormValidators.required(fieldName: 'الاسم')(''),
+        'حقل الاسم مطلوب.',
+      );
       expect(FormValidators.email()(''), 'البريد الإلكتروني مطلوب.');
       expect(
         FormValidators.password()('abc'),
         'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.',
       );
+      expect(
+        FormValidators.nationalId(ArabCountry.egypt)('123'),
+        'أدخل رقم هوية صالحًا.',
+      );
     });
 
     test('falls back to English for an unsupported code', () {
       FormValidators.configure(languageCode: 'ar');
-      FormValidators.configure(languageCode: 'xx');
+      FormValidators.configure(languageCode: 'fr');
       expect(FormValidators.messages.runtimeType, ValidationMessages);
       expect(FormValidators.required()(''), english.required);
     });
@@ -202,22 +189,22 @@ void main() {
       final validator = FormValidators.email();
       expect(validator(''), english.emailRequired);
 
-      FormValidators.configure(languageCode: 'fr');
-      expect(validator(''), "L'adresse e-mail est obligatoire.");
+      FormValidators.configure(languageCode: 'ar-EG');
+      expect(validator(''), 'البريد الإلكتروني مطلوب.');
 
-      FormValidators.configure(languageCode: 'de-AT');
-      expect(validator(''), 'Die E-Mail-Adresse ist erforderlich.');
+      FormValidators.configure(languageCode: 'en');
+      expect(validator(''), english.emailRequired);
     });
 
     test('keeps the language when only rules change', () {
-      FormValidators.configure(languageCode: 'tr');
+      FormValidators.configure(languageCode: 'ar');
       FormValidators.configure(
         rules: const ValidationRules(passwordMinLength: 4),
       );
-      expect(FormValidators.messages, isA<ValidationMessagesTr>());
+      expect(FormValidators.messages, isA<ValidationMessagesAr>());
       expect(
         FormValidators.password()('abc'),
-        'Şifre en az 4 karakter olmalıdır.',
+        'يجب أن تتكون كلمة المرور من 4 أحرف على الأقل.',
       );
     });
 
@@ -227,7 +214,7 @@ void main() {
     });
 
     test('reset goes back to English', () {
-      FormValidators.configure(languageCode: 'es');
+      FormValidators.configure(languageCode: 'ar');
       FormValidators.reset();
       expect(FormValidators.required()(''), english.required);
     });
@@ -243,7 +230,7 @@ void main() {
     });
   });
 
-  test('a built-in translation can be extended to change one message', () {
+  test('the Arabic messages can be extended to change one message', () {
     FormValidators.configure(messages: const _CustomArabic());
     expect(FormValidators.email()('x'), 'البريد غير صحيح');
     expect(FormValidators.email()(''), 'البريد الإلكتروني مطلوب.');

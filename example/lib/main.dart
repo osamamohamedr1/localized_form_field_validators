@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:localized_form_field_validators/localized_form_field_validators.dart';
 
 void main() {
-  // Global override: applies to every validator in the app, including
-  // validators that were built before this call. Without a languageCode or
-  // messages, the validators use the built-in English messages.
-  FormValidators.configure(
-    messages: const DemoMessages(),
-    rules: const ValidationRules().copyWith(
-      // Egyptian (010/011/012/015 + 8 digits) or Saudi (5 + 8 digits) mobiles.
-      phonePattern: r'^(010|011|012|015)\d{8}$|^5\d{8}$',
-    ),
-  );
+  configureDemoValidators();
   runApp(const DemoApp());
 }
 
+/// Sets the app-wide validation rules. Messages come from the localizations
+/// delegate in [DemoApp], which follows the app's locale.
+void configureDemoValidators() {
+  // Global rule override: applies to every validator in the app, including
+  // validators that were built before this call.
+  FormValidators.configure(
+    rules: FormValidators.rules.copyWith(
+      phonePattern: PhonePatterns.anyOf([
+        PhonePatterns.egypt,
+        PhonePatterns.saudiArabia,
+      ]),
+    ),
+  );
+}
+
 /// App-wide English messages. Only these two change; every other message
-/// keeps its English default. Other languages use the built-in translations.
+/// keeps its English default.
 class DemoMessages extends ValidationMessages {
-  /// Creates the demo messages.
+  /// Creates the demo English messages.
   const DemoMessages();
 
   @override
@@ -28,27 +35,51 @@ class DemoMessages extends ValidationMessages {
   String get invalidPhone => 'Enter an Egyptian or Saudi mobile number.';
 }
 
-/// Display names for the built-in languages in the language menu.
-const _languageNames = {
-  'en': 'English',
-  'ar': 'العربية',
-  'de': 'Deutsch',
-  'es': 'Español',
-  'fr': 'Français',
-  'tr': 'Türkçe',
-};
+/// App-wide Arabic messages, built on the package's Arabic translation.
+class DemoArabicMessages extends ValidationMessagesAr {
+  /// Creates the demo Arabic messages.
+  const DemoArabicMessages();
+
+  @override
+  String get invalidPhone => 'أدخل رقم جوال مصري أو سعودي صحيح.';
+}
+
+/// Chooses the validators' messages for the app's locale.
+ValidationMessages demoMessagesFor(Locale locale) => locale.languageCode == 'ar'
+    ? const DemoArabicMessages()
+    : const DemoMessages();
 
 /// The demo application.
-class DemoApp extends StatelessWidget {
+class DemoApp extends StatefulWidget {
   /// Creates the demo application.
-  const DemoApp({super.key});
+  const DemoApp({super.key, this.theme});
+
+  /// Replaces the default theme, for example to set fonts for screenshots.
+  final ThemeData? theme;
+
+  @override
+  State<DemoApp> createState() => _DemoAppState();
+}
+
+class _DemoAppState extends State<DemoApp> {
+  Locale _locale = const Locale('en');
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'localized_form_field_validators demo',
-      theme: ThemeData(colorSchemeSeed: Colors.indigo),
-      home: const SignUpPage(),
+      debugShowCheckedModeBanner: false,
+      theme: widget.theme ?? ThemeData(colorSchemeSeed: Colors.indigo),
+      locale: _locale,
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: const [
+        // Switches the validators' messages whenever the locale changes.
+        ValidationMessagesDelegate(messagesFor: demoMessagesFor),
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      home: SignUpPage(
+        onLanguageChanged: (code) => setState(() => _locale = Locale(code)),
+      ),
     );
   }
 }
@@ -56,7 +87,10 @@ class DemoApp extends StatelessWidget {
 /// A sign-up form that uses the validators.
 class SignUpPage extends StatefulWidget {
   /// Creates the sign-up page.
-  const SignUpPage({super.key});
+  const SignUpPage({super.key, required this.onLanguageChanged});
+
+  /// Called with `'en'` or `'ar'` when the user picks a language.
+  final ValueChanged<String> onLanguageChanged;
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
@@ -65,8 +99,12 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
-  String _languageCode = 'en';
   bool _submitted = false;
+
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
+
+  /// The demo's own labels, in the current language.
+  String _t(String english, String arabic) => _isArabic ? arabic : english;
 
   @override
   void dispose() {
@@ -75,24 +113,22 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _setLanguage(String code) {
-    if (code == 'en') {
-      FormValidators.configure(messages: const DemoMessages());
-    } else {
-      // Built-in translation, selected by language code.
-      FormValidators.configure(languageCode: code);
+    widget.onLanguageChanged(code);
+    // The delegate loads the new messages during the next frame. Validate
+    // after it so errors that are already on screen switch language too.
+    if (_submitted) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _formKey.currentState?.validate(),
+      );
     }
-    setState(() => _languageCode = code);
-    // Validators read the new messages the next time they run, so re-run
-    // them to update errors that are already on screen.
-    if (_submitted) _formKey.currentState!.validate();
   }
 
   void _submit() {
     _submitted = true;
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Account created')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_t('Account created', 'تم إنشاء الحساب'))),
+      );
     }
   }
 
@@ -100,97 +136,116 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign up'),
+        title: Text(_t('Sign up', 'إنشاء حساب')),
         actions: [
           PopupMenuButton<String>(
             tooltip: 'Language',
             icon: const Icon(Icons.translate),
-            initialValue: _languageCode,
+            initialValue: Localizations.localeOf(context).languageCode,
             onSelected: _setLanguage,
-            itemBuilder: (context) => [
-              for (final code in ValidationMessages.supportedLanguageCodes)
-                PopupMenuItem(value: code, child: Text(_languageNames[code]!)),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'en', child: Text('English')),
+              PopupMenuItem(value: 'ar', child: Text('العربية')),
             ],
           ),
         ],
       ),
-      body: Directionality(
-        textDirection: _languageCode == 'ar'
-            ? TextDirection.rtl
-            : TextDirection.ltr,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Defaults: built-in messages and rules.
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: FormValidators.compose([
-                  FormValidators.required(),
-                  FormValidators.lengthBetween(2, 50),
-                ]),
+      body: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Built-in messages, with the field name in the error.
+            TextFormField(
+              decoration: InputDecoration(labelText: _t('Name', 'الاسم')),
+              validator: FormValidators.compose([
+                FormValidators.required(fieldName: _t('Name', 'الاسم')),
+                FormValidators.lengthBetween(2, 50),
+              ]),
+            ),
+            // Global message override: emailRequired comes from
+            // DemoMessages in English.
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: _t('Email', 'البريد الإلكتروني'),
               ),
-              // Global override: in English, emailRequired comes from
-              // DemoMessages.
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: FormValidators.email(),
+              keyboardType: TextInputType.emailAddress,
+              validator: FormValidators.email(),
+            ),
+            // Global rule override: PhonePatterns set in main().
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: _t('Mobile (optional)', 'رقم الجوال (اختياري)'),
+                hintText: '01012345678 / 512345678',
               ),
-              // Global override: phonePattern and invalidPhone come from
-              // main().
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Mobile (optional)',
-                  hintText: '01012345678 or 512345678',
+              keyboardType: TextInputType.phone,
+              validator: FormValidators.phone(isRequired: false),
+            ),
+            // Egyptian national ID: format, birth date and governorate.
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: _t(
+                  'National ID (optional)',
+                  'الرقم القومي (اختياري)',
                 ),
-                keyboardType: TextInputType.phone,
-                validator: FormValidators.phone(isRequired: false),
+                hintText: '29001010123456',
               ),
-              // Defaults, with a range and whole numbers only.
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Age'),
-                keyboardType: TextInputType.number,
-                validator: FormValidators.number(
-                  min: 18,
-                  max: 120,
-                  allowDecimal: false,
-                ),
+              keyboardType: TextInputType.number,
+              validator: FormValidators.nationalId(
+                ArabCountry.egypt,
+                isRequired: false,
               ),
-              // Defaults: length, lowercase, uppercase, number and special
-              // character, checked in that order.
-              TextFormField(
-                controller: _password,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: FormValidators.strongPassword(),
+            ),
+            // Built-in messages, with a range and whole numbers only.
+            TextFormField(
+              decoration: InputDecoration(labelText: _t('Age', 'العمر')),
+              keyboardType: TextInputType.number,
+              validator: FormValidators.number(
+                min: 18,
+                max: 120,
+                allowDecimal: false,
               ),
-              // Per-call override: these messages beat the global and default
-              // ones, so they stay in English whatever the language.
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Confirm password',
-                ),
-                obscureText: true,
-                validator: FormValidators.compose([
-                  FormValidators.required(
-                    message: 'Please confirm your password.',
+            ),
+            // Built-in messages: length, lowercase, uppercase, number and
+            // special character, checked in that order.
+            TextFormField(
+              controller: _password,
+              decoration: InputDecoration(
+                labelText: _t('Password', 'كلمة المرور'),
+              ),
+              obscureText: true,
+              validator: FormValidators.strongPassword(),
+            ),
+            // Per-call override: these messages beat the global and default
+            // ones. The app translates them itself.
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: _t('Confirm password', 'تأكيد كلمة المرور'),
+              ),
+              obscureText: true,
+              validator: FormValidators.compose([
+                FormValidators.required(
+                  message: _t(
+                    'Please confirm your password.',
+                    'يرجى تأكيد كلمة المرور.',
                   ),
-                  FormValidators.match(
-                    () => _password.text,
-                    message: 'Passwords must match.',
+                ),
+                FormValidators.match(
+                  () => _password.text,
+                  message: _t(
+                    'Passwords must match.',
+                    'كلمتا المرور غير متطابقتين.',
                   ),
-                ]),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _submit,
-                child: const Text('Create account'),
-              ),
-            ],
-          ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _submit,
+              child: Text(_t('Create account', 'إنشاء الحساب')),
+            ),
+          ],
         ),
       ),
     );

@@ -24,6 +24,27 @@ void main() {
     test('uses the per-call message', () {
       expect(FormValidators.required(message: 'Name it')(''), 'Name it');
     });
+
+    test('includes the field name when given', () {
+      final validator = FormValidators.required(fieldName: 'Name');
+      expect(validator(''), defaults.requiredField('Name'));
+      expect(validator(''), 'Name is required.');
+      expect(validator('Sara'), isNull);
+    });
+
+    test('per-call message beats the field name', () {
+      final validator = FormValidators.required(
+        fieldName: 'Name',
+        message: 'Custom',
+      );
+      expect(validator(''), 'Custom');
+    });
+
+    test('field name message can be overridden globally', () {
+      FormValidators.configure(messages: const _FieldMessages());
+      expect(FormValidators.required(fieldName: 'Email')(''), 'Need Email');
+      expect(FormValidators.required()(''), defaults.required);
+    });
   });
 
   group('minLength', () {
@@ -234,7 +255,7 @@ void main() {
     });
 
     test('passes when the list is empty', () {
-      expect(FormValidators.compose([])('anything'), isNull);
+      expect(FormValidators.compose<String>([])('anything'), isNull);
     });
 
     test('is not affected by later changes to the list', () {
@@ -246,4 +267,11 @@ void main() {
       expect(validator('a'), isNull);
     });
   });
+}
+
+class _FieldMessages extends ValidationMessages {
+  const _FieldMessages();
+
+  @override
+  String requiredField(String fieldName) => 'Need $fieldName';
 }

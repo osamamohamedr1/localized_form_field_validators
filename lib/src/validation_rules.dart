@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import 'arab_country.dart';
+import 'password_check.dart';
+
 /// The rules the validators in `FormValidators` check against, such as the
 /// email and phone patterns and the password policy.
 ///
@@ -35,7 +38,14 @@ class ValidationRules {
     this.passwordRequireUppercase = true,
     this.passwordRequireNumber = true,
     this.passwordRequireSpecialCharacter = true,
+    this.passwordLowercasePattern = '[a-z]',
+    this.passwordUppercasePattern = '[A-Z]',
+    this.passwordNumberPattern = '[0-9]',
     this.specialCharacterPattern = r'[^A-Za-z0-9\s]',
+    this.passwordCheckOrder = PasswordCheck.values,
+    this.passportPattern = r'^[A-Za-z0-9]{6,9}$',
+    this.nationalIdRules = const {},
+    this.normalizeDigits = true,
   }) : assert(passwordMinLength >= 0, 'passwordMinLength must be >= 0');
 
   /// The pattern a valid email address must match.
@@ -43,12 +53,12 @@ class ValidationRules {
   /// Default: `^[\w.+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$`
   final String emailPattern;
 
-  /// The pattern a valid phone number must match. Input is trimmed but not
-  /// otherwise normalized, so allow separators such as spaces in the pattern
-  /// if you want to accept them.
+  /// The pattern a valid phone number must match. Input is trimmed, and
+  /// Arabic digits are converted when [normalizeDigits] is `true`, so allow
+  /// separators such as spaces in the pattern if you want to accept them.
   ///
   /// Default: `^\+?[0-9]{7,15}$` (7 to 15 digits with an optional leading
-  /// `+`).
+  /// `+`). See `PhonePatterns` and `ArabCountry` for country patterns.
   final String phonePattern;
 
   /// The minimum number of characters in a password. Used by both
@@ -57,35 +67,87 @@ class ValidationRules {
   /// Default: `8`.
   final int passwordMinLength;
 
-  /// Whether `FormValidators.strongPassword` requires a lowercase letter
-  /// (`a` to `z`).
+  /// Whether `FormValidators.strongPassword` requires a character matching
+  /// [passwordLowercasePattern].
   ///
   /// Default: `true`.
   final bool passwordRequireLowercase;
 
-  /// Whether `FormValidators.strongPassword` requires an uppercase letter
-  /// (`A` to `Z`).
+  /// Whether `FormValidators.strongPassword` requires a character matching
+  /// [passwordUppercasePattern].
   ///
   /// Default: `true`.
   final bool passwordRequireUppercase;
 
-  /// Whether `FormValidators.strongPassword` requires a digit (`0` to `9`).
+  /// Whether `FormValidators.strongPassword` requires a character matching
+  /// [passwordNumberPattern].
   ///
   /// Default: `true`.
   final bool passwordRequireNumber;
 
-  /// Whether `FormValidators.strongPassword` requires a character that
-  /// matches [specialCharacterPattern].
+  /// Whether `FormValidators.strongPassword` requires a character matching
+  /// [specialCharacterPattern].
   ///
   /// Default: `true`.
   final bool passwordRequireSpecialCharacter;
 
-  /// The pattern a password must contain at least one match of when
-  /// [passwordRequireSpecialCharacter] is `true`.
+  /// What counts as a lowercase letter in a password.
+  ///
+  /// Default: `[a-z]`.
+  final String passwordLowercasePattern;
+
+  /// What counts as an uppercase letter in a password.
+  ///
+  /// Default: `[A-Z]`.
+  final String passwordUppercasePattern;
+
+  /// What counts as a number in a password.
+  ///
+  /// Default: `[0-9]`.
+  final String passwordNumberPattern;
+
+  /// What counts as a special character in a password.
   ///
   /// Default: `[^A-Za-z0-9\s]` (anything except ASCII letters, digits and
   /// whitespace).
   final String specialCharacterPattern;
+
+  /// The order `FormValidators.strongPassword` runs its checks in; it
+  /// returns the first failure. Must list every [PasswordCheck] exactly
+  /// once.
+  ///
+  /// Default: [PasswordCheck.values], that is minimum length, lowercase,
+  /// uppercase, number, then special character.
+  final List<PasswordCheck> passwordCheckOrder;
+
+  /// The pattern a valid passport number must match, used by
+  /// `FormValidators.passport`.
+  ///
+  /// Default: `^[A-Za-z0-9]{6,9}$` (6 to 9 letters or digits).
+  final String passportPattern;
+
+  /// National ID rules that replace or add to the built-in ones, by
+  /// country. Each function receives the trimmed ID with spaces and dashes
+  /// removed and returns whether it is valid.
+  ///
+  /// ```dart
+  /// bool kuwaitCivilId(String id) => RegExp(r'^\d{12}$').hasMatch(id);
+  ///
+  /// const ValidationRules(nationalIdRules: {ArabCountry.kuwait: kuwaitCivilId});
+  /// ```
+  ///
+  /// Default: empty, so the built-in rules are used.
+  final Map<ArabCountry, bool Function(String id)> nationalIdRules;
+
+  /// Whether Arabic-Indic (`٠١٢٣٤٥٦٧٨٩`) and Persian (`۰۱۲۳۴۵۶۷۸۹`) digits
+  /// are converted to `0`–`9` before checking phone numbers, numbers,
+  /// national IDs, passports and IBANs.
+  ///
+  /// The validators only check the converted value; convert the value you
+  /// store or send with `FormValidators.normalizeDigits`.
+  ///
+  /// Default: `true`.
+  final bool normalizeDigits;
 
   /// Returns a copy of these rules with the given fields replaced.
   ///
@@ -100,7 +162,14 @@ class ValidationRules {
     bool? passwordRequireUppercase,
     bool? passwordRequireNumber,
     bool? passwordRequireSpecialCharacter,
+    String? passwordLowercasePattern,
+    String? passwordUppercasePattern,
+    String? passwordNumberPattern,
     String? specialCharacterPattern,
+    List<PasswordCheck>? passwordCheckOrder,
+    String? passportPattern,
+    Map<ArabCountry, bool Function(String id)>? nationalIdRules,
+    bool? normalizeDigits,
   }) {
     return ValidationRules(
       emailPattern: emailPattern ?? this.emailPattern,
@@ -115,8 +184,18 @@ class ValidationRules {
       passwordRequireSpecialCharacter:
           passwordRequireSpecialCharacter ??
           this.passwordRequireSpecialCharacter,
+      passwordLowercasePattern:
+          passwordLowercasePattern ?? this.passwordLowercasePattern,
+      passwordUppercasePattern:
+          passwordUppercasePattern ?? this.passwordUppercasePattern,
+      passwordNumberPattern:
+          passwordNumberPattern ?? this.passwordNumberPattern,
       specialCharacterPattern:
           specialCharacterPattern ?? this.specialCharacterPattern,
+      passwordCheckOrder: passwordCheckOrder ?? this.passwordCheckOrder,
+      passportPattern: passportPattern ?? this.passportPattern,
+      nationalIdRules: nationalIdRules ?? this.nationalIdRules,
+      normalizeDigits: normalizeDigits ?? this.normalizeDigits,
     );
   }
 
@@ -131,7 +210,14 @@ class ValidationRules {
         other.passwordRequireNumber == passwordRequireNumber &&
         other.passwordRequireSpecialCharacter ==
             passwordRequireSpecialCharacter &&
-        other.specialCharacterPattern == specialCharacterPattern;
+        other.passwordLowercasePattern == passwordLowercasePattern &&
+        other.passwordUppercasePattern == passwordUppercasePattern &&
+        other.passwordNumberPattern == passwordNumberPattern &&
+        other.specialCharacterPattern == specialCharacterPattern &&
+        listEquals(other.passwordCheckOrder, passwordCheckOrder) &&
+        other.passportPattern == passportPattern &&
+        mapEquals(other.nationalIdRules, nationalIdRules) &&
+        other.normalizeDigits == normalizeDigits;
   }
 
   @override
@@ -143,6 +229,17 @@ class ValidationRules {
     passwordRequireUppercase,
     passwordRequireNumber,
     passwordRequireSpecialCharacter,
+    passwordLowercasePattern,
+    passwordUppercasePattern,
+    passwordNumberPattern,
     specialCharacterPattern,
+    Object.hashAll(passwordCheckOrder),
+    passportPattern,
+    Object.hashAllUnordered(
+      nationalIdRules.entries.map(
+        (entry) => Object.hash(entry.key, entry.value),
+      ),
+    ),
+    normalizeDigits,
   );
 }

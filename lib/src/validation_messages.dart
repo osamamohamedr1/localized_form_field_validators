@@ -1,18 +1,17 @@
 import 'l10n/validation_messages_ar.dart';
-import 'l10n/validation_messages_de.dart';
-import 'l10n/validation_messages_es.dart';
-import 'l10n/validation_messages_fr.dart';
-import 'l10n/validation_messages_tr.dart';
 
 /// The error messages returned by the validators in `FormValidators`.
 ///
 /// Every message has an English default, and English is used until another
-/// language is configured. Built-in translations for the
-/// [supportedLanguageCodes] are available by language code:
+/// language is configured. Built-in Arabic messages ([ValidationMessagesAr])
+/// are available by language code:
 ///
 /// ```dart
 /// FormValidators.configure(languageCode: 'ar');
 /// ```
+///
+/// To follow the app's locale automatically, add `FormValidators.delegate`
+/// to `MaterialApp.localizationsDelegates`.
 ///
 /// To change messages, for example to plug in your own localization, extend
 /// this class (or a built-in translation such as [ValidationMessagesAr]),
@@ -61,24 +60,13 @@ class ValidationMessages {
   factory ValidationMessages.forLanguage(String languageCode) {
     return switch (_baseLanguage(languageCode)) {
       'ar' => const ValidationMessagesAr(),
-      'de' => const ValidationMessagesDe(),
-      'es' => const ValidationMessagesEs(),
-      'fr' => const ValidationMessagesFr(),
-      'tr' => const ValidationMessagesTr(),
       _ => const ValidationMessages(),
     };
   }
 
-  /// The language codes that have built-in messages: English (`en`), Arabic
-  /// (`ar`), German (`de`), Spanish (`es`), French (`fr`) and Turkish (`tr`).
-  static const List<String> supportedLanguageCodes = [
-    'en',
-    'ar',
-    'de',
-    'es',
-    'fr',
-    'tr',
-  ];
+  /// The language codes that have built-in messages: English (`en`) and
+  /// Arabic (`ar`).
+  static const List<String> supportedLanguageCodes = ['en', 'ar'];
 
   // General -------------------------------------------------------------------
 
@@ -86,6 +74,12 @@ class ValidationMessages {
   ///
   /// Default: "This field is required."
   String get required => 'This field is required.';
+
+  /// Returned when a required value is empty and the validator was given a
+  /// field name, as in `FormValidators.required(fieldName: 'Name')`.
+  ///
+  /// Default: "[fieldName] is required."
+  String requiredField(String fieldName) => '$fieldName is required.';
 
   /// Returned when a value is shorter than [min] characters.
   ///
@@ -155,6 +149,18 @@ class ValidationMessages {
   String get invalidEmailOrPhone =>
       'Enter a valid email address or phone number.';
 
+  // National ID ---------------------------------------------------------------
+
+  /// Returned when a required national ID number is empty.
+  ///
+  /// Default: "National ID number is required."
+  String get nationalIdRequired => 'National ID number is required.';
+
+  /// Returned when a value is not a valid national ID number.
+  ///
+  /// Default: "Enter a valid national ID number."
+  String get invalidNationalId => 'Enter a valid national ID number.';
+
   // Password ------------------------------------------------------------------
 
   /// Returned when a required password is empty.
@@ -208,9 +214,74 @@ class ValidationMessages {
   ///
   /// Default: "Must be at most [max]."
   String numberMax(num max) => 'Must be at most $max.';
+
+  /// Returned when a number is not greater than [value].
+  ///
+  /// Default: "Must be greater than [value]."
+  String numberGreaterThan(num value) => 'Must be greater than $value.';
+
+  /// Returned when a number is not less than [value].
+  ///
+  /// Default: "Must be less than [value]."
+  String numberLessThan(num value) => 'Must be less than $value.';
+
+  // Dates ---------------------------------------------------------------------
+
+  /// Returned when a required date is not selected.
+  ///
+  /// Default: "Select a date."
+  String get dateRequired => 'Select a date.';
+
+  /// Returned when a date must be in the future but is not, for example an
+  /// expiry date.
+  ///
+  /// Default: "Date must be in the future."
+  String get dateMustBeFuture => 'Date must be in the future.';
+
+  /// Returned when a date must be in the past but is not, for example a
+  /// birth date.
+  ///
+  /// Default: "Date must be in the past."
+  String get dateMustBePast => 'Date must be in the past.';
+
+  /// Returned when an age, calculated from a birth date, is less than [min]
+  /// years.
+  ///
+  /// Default: "Age must be at least [min] years." ("year" when [min] is 1).
+  String ageMin(int min) => 'Age must be at least $min ${_years(min)}.';
+
+  /// Returned when an age, calculated from a birth date, is more than [max]
+  /// years.
+  ///
+  /// Default: "Age must be at most [max] years." ("year" when [max] is 1).
+  String ageMax(int max) => 'Age must be at most $max ${_years(max)}.';
+
+  // Passport and IBAN ---------------------------------------------------------
+
+  /// Returned when a required passport number is empty.
+  ///
+  /// Default: "Passport number is required."
+  String get passportRequired => 'Passport number is required.';
+
+  /// Returned when a value is not a valid passport number.
+  ///
+  /// Default: "Enter a valid passport number."
+  String get invalidPassport => 'Enter a valid passport number.';
+
+  /// Returned when a required IBAN is empty.
+  ///
+  /// Default: "IBAN is required."
+  String get ibanRequired => 'IBAN is required.';
+
+  /// Returned when a value is not a valid IBAN.
+  ///
+  /// Default: "Enter a valid IBAN."
+  String get invalidIban => 'Enter a valid IBAN.';
 }
 
 String _characters(int count) => count == 1 ? 'character' : 'characters';
+
+String _years(int count) => count == 1 ? 'year' : 'years';
 
 /// Lowercases [code] and strips any region or script suffix, so `'ar-EG'`
 /// becomes `'ar'`.

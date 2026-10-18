@@ -4,12 +4,12 @@
 /// - [FormValidators] builds the validators and holds the app-wide
 ///   configuration.
 /// - [ValidationMessages] holds the error messages, in English by default.
-///   Pick a built-in translation by language code, or extend it to use your
-///   own.
-/// - [ValidationMessagesAr], [ValidationMessagesDe], [ValidationMessagesEs],
-///   [ValidationMessagesFr] and [ValidationMessagesTr] are the built-in
-///   translations.
+///   [ValidationMessagesAr] holds the built-in Arabic messages. Extend either
+///   to use your own.
+/// - [ValidationMessagesDelegate] switches the messages to the app's locale.
 /// - [ValidationRules] holds the patterns and the password policy.
+/// - [ArabCountry] lists Arab countries with phone and national ID rules,
+///   and [PhonePatterns] holds their mobile phone patterns.
 ///
 /// ```dart
 /// import 'package:localized_form_field_validators/localized_form_field_validators.dart';
@@ -26,11 +26,11 @@
 /// ```
 library;
 
+export 'src/arab_country.dart' show ArabCountry;
 export 'src/form_validators.dart' show FormValidators;
+export 'src/password_check.dart' show PasswordCheck;
 export 'src/l10n/validation_messages_ar.dart' show ValidationMessagesAr;
-export 'src/l10n/validation_messages_de.dart' show ValidationMessagesDe;
-export 'src/l10n/validation_messages_es.dart' show ValidationMessagesEs;
-export 'src/l10n/validation_messages_fr.dart' show ValidationMessagesFr;
-export 'src/l10n/validation_messages_tr.dart' show ValidationMessagesTr;
+export 'src/phone_patterns.dart' show PhonePatterns;
 export 'src/validation_messages.dart' show ValidationMessages;
+export 'src/validation_messages_delegate.dart' show ValidationMessagesDelegate;
 export 'src/validation_rules.dart' show ValidationRules;

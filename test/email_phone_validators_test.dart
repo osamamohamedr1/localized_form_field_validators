@@ -157,4 +157,30 @@ void main() {
       expect(validator('!!!'), 'Not valid');
     });
   });
+
+  group('emailOrPhone per-call patterns', () {
+    test('emailPattern and phonePattern replace the global rules', () {
+      final validator = FormValidators.emailOrPhone(
+        emailPattern: r'@company\.com$',
+        phonePattern: PhonePatterns.qatar,
+      );
+      expect(validator('user@company.com'), isNull);
+      expect(validator('user@gmail.com'), defaults.invalidEmail);
+      expect(validator('55123456'), isNull);
+      expect(validator('01012345678'), defaults.invalidPhone);
+    });
+
+    test('per-call patterns beat configured rules', () {
+      FormValidators.configure(
+        rules: const ValidationRules(phonePattern: PhonePatterns.egypt),
+      );
+      expect(FormValidators.emailOrPhone()('55123456'), defaults.invalidPhone);
+      expect(
+        FormValidators.emailOrPhone(phonePattern: PhonePatterns.qatar)(
+          '55123456',
+        ),
+        isNull,
+      );
+    });
+  });
 }
