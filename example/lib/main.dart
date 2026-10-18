@@ -1,5 +1,5 @@
-import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter/material.dart';
+import 'package:localized_form_field_validators/localized_form_field_validators.dart';
 
 void main() {
   // Global override: applies to every validator in the app, including
@@ -35,7 +35,7 @@ class DemoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'easy_form_validators demo',
+      title: 'localized_form_field_validators demo',
       theme: ThemeData(colorSchemeSeed: Colors.indigo),
       home: const SignUpPage(),
     );

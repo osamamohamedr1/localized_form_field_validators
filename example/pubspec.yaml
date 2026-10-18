@@ -1,5 +1,5 @@
-name: easy_form_validators_example
-description: "Demo app for the easy_form_validators package."
+name: localized_form_field_validators_example
+description: "Demo app for the localized_form_field_validators package."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  easy_form_validators:
+  localized_form_field_validators:
     path: ../
 
 dev_dependencies:

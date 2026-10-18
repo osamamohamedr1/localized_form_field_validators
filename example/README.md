@@ -1,6 +1,6 @@
-# easy_form_validators_example
+# localized_form_field_validators_example
 
-A demo sign-up form for the `easy_form_validators` package. It shows:
+A demo sign-up form for the `localized_form_field_validators` package. It shows:
 
 - **Defaults:** fields that use the built-in English messages and rules.
 - **Global override:** `main()` calls `FormValidators.configure` with a

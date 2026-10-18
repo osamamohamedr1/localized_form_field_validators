@@ -1,7 +1,7 @@
-name: easy_form_validators
+name: localized_form_field_validators
 description: "TextFormField validators with English defaults and per-call or global overrides for messages and rules. Localization-friendly, no extra dependencies."
 version: 0.1.0
-repository: https://github.com/osamamohamedr1/easy_form_validators
+repository: https://github.com/osamamohamedr1/localized_form_field_validators
 
 environment:
   sdk: ^3.10.3

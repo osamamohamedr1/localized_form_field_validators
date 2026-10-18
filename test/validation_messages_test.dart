@@ -1,5 +1,5 @@
-import 'package:easy_form_validators/easy_form_validators.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:localized_form_field_validators/localized_form_field_validators.dart';
 
 void main() {
   const messages = ValidationMessages();
